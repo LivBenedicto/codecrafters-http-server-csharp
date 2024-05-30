@@ -31,7 +31,7 @@ try
     
     // GET / HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
     if (path == "/")
-        response = okResponse;
+        response = okResponse+rn;
     // GET /echo/abc HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
     else if (path.StartsWith("/echo"))
     {
