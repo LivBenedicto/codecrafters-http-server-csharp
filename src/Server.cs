@@ -16,7 +16,8 @@ try
     // GET /index.html HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
     byte[] responseBuffer = new byte[1024];
     int _ = await socket.ReceiveAsync(responseBuffer);
-    string[] rows = ASCIIEncoding.UTF8.GetString(responseBuffer).Split("\r\n");
+    string rn = Environment.NewLine;
+    string[] rows = ASCIIEncoding.UTF8.GetString(responseBuffer).Split($"{rn}");
 
     // GET /index.html HTTP/1.1
     string[] firstSlipt = rows[0].Split(" ");
@@ -24,20 +25,19 @@ try
     Console.WriteLine($"Method: {method}, Path: {path}, HTTP Version: {version}");
 
     // HTTP/1.1 404 Not Found\r\n\r\n
-    string okResponse = $"{version} 200 OK\r\n\r\n";
-    string notFoundResponse = $"{version} 404 Not Found\r\n\r\n";
+    string okResponse = $"{version} 200 OK{rn}{rn}";
+    string notFoundResponse = $"{version} 404 Not Found{rn}{rn}";
 
-    string response = path == "/" ? okResponse : notFoundResponse;
-    
+    string response = string.Empty;
     // GET /echo/abc HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
     if (path.StartsWith("/echo"))
     {
         // HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\nabc
-        string rn = Environment.NewLine;
         string pathMessage = path.Replace("/echo/", "");
 
-        response += $"{rn}Content-Type: text/plain{rn}Content-Length: {pathMessage.Length}{rn}{rn}{pathMessage}";
+        response = $"{okResponse}{rn}Content-Type: text/plain{rn}Content-Length: {pathMessage.Length}{rn}{rn}{pathMessage}";
     }
+    else response = notFoundResponse;
 
     Console.WriteLine($"Response: {response}");
 
