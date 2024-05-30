@@ -1,6 +1,8 @@
 using System;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Text;
 using static System.Net.WebRequestMethods;
 
@@ -26,6 +28,17 @@ try
     string notFoundResponse = $"{version} 404 Not Found\r\n\r\n";
 
     string response = path == "/" ? okResponse : notFoundResponse;
+    
+    // GET /echo/abc HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
+    if (path.StartsWith("/echo"))
+    {
+        // HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\nabc
+        string rn = Environment.NewLine;
+        string pathMessage = path.Replace("/echo/", "");
+
+        response += $"{rn}Content-Type: text/plain{rn}Content-Length: {pathMessage.Length}{rn}{rn}{pathMessage}";
+    }
+
     Console.WriteLine($"Response: {response}");
 
     await socket.SendAsync(ASCIIEncoding.UTF8.GetBytes(response));
