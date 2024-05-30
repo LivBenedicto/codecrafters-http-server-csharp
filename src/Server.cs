@@ -23,7 +23,7 @@ try
 
     // HTTP/1.1 404 Not Found\r\n\r\n
     string okResponse = $"{version} 200 OK\r\n\r\n";
-    string notFoundResponse = $"{version} 400 Not Found\r\n\r\n";
+    string notFoundResponse = $"{version} 404 Not Found\r\n\r\n";
 
     string response = path == "/" ? okResponse : notFoundResponse;
     Console.WriteLine($"Response: {response}");
