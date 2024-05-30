@@ -13,7 +13,6 @@ try
 {
     Socket socket = await server.AcceptSocketAsync();
     
-    // GET /index.html HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
     byte[] responseBuffer = new byte[1024];
     int _ = await socket.ReceiveAsync(responseBuffer);
     string rn = "\r\n"; //Environment.NewLine
@@ -28,15 +27,20 @@ try
     string okResponse = $"{version} 200 OK{rn}";
     string notFoundResponse = $"{version} 404 Not Found{rn}{rn}";
 
-    string response = okResponse;
+    string response = string.Empty;
+    
+    // GET / HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
+    if (path == "/")
+        response = okResponse;
     // GET /echo/abc HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
-    if (path.StartsWith("/echo"))
+    else if (path.StartsWith("/echo"))
     {
         // HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\nabc
         string pathMessage = path.Replace("/echo/", "");
 
         response = $"{okResponse}Content-Type: text/plain{rn}Content-Length: {pathMessage.Length}{rn}{rn}{pathMessage}";
     }
+    // GET /index.html HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
     else response = notFoundResponse;
 
     Console.WriteLine($"Response: {response}");
