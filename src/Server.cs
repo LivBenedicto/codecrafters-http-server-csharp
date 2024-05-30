@@ -28,7 +28,7 @@ try
     string okResponse = $"{version} 200 OK{rn}";
     string notFoundResponse = $"{version} 404 Not Found{rn}{rn}";
 
-    string response = string.Empty;
+    string response = okResponse;
     // GET /echo/abc HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
     if (path.StartsWith("/echo"))
     {
