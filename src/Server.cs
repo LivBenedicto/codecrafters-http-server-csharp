@@ -16,7 +16,7 @@ try
     // GET /index.html HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
     byte[] responseBuffer = new byte[1024];
     int _ = await socket.ReceiveAsync(responseBuffer);
-    string rn = Environment.NewLine;
+    string rn = "\r\n"; //Environment.NewLine
     string[] rows = ASCIIEncoding.UTF8.GetString(responseBuffer).Split($"{rn}");
 
     // GET /index.html HTTP/1.1
