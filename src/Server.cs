@@ -25,7 +25,7 @@ try
     Console.WriteLine($"Method: {method}, Path: {path}, HTTP Version: {version}");
 
     // HTTP/1.1 404 Not Found\r\n\r\n
-    string okResponse = $"{version} 200 OK{rn}{rn}";
+    string okResponse = $"{version} 200 OK{rn}";
     string notFoundResponse = $"{version} 404 Not Found{rn}{rn}";
 
     string response = string.Empty;
@@ -35,7 +35,7 @@ try
         // HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\nabc
         string pathMessage = path.Replace("/echo/", "");
 
-        response = $"{okResponse}{rn}Content-Type: text/plain{rn}Content-Length: {pathMessage.Length}{rn}{rn}{pathMessage}";
+        response = $"{okResponse}Content-Type: text/plain{rn}Content-Length: {pathMessage.Length}{rn}{rn}{pathMessage}";
     }
     else response = notFoundResponse;
 
