@@ -22,8 +22,7 @@ try
     Console.WriteLine($"1# -> Method: {method}, Path: {path}, HTTP Version: {version}");
     
     // Host: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
-    string[] secondSplit = rows[1].Split($"{rn}");
-    var (host, userAgent, accept) = (secondSplit[1], secondSplit[2], secondSplit[3]);
+    var (host, userAgent, accept) = (rows[1], rows[2], rows[3]);
     Console.WriteLine($"2# -> Host: {host}, UserAgent: {userAgent}, Accept: {accept}");
 
     // HTTP/1.1 404 Not Found\r\n\r\n
