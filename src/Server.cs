@@ -12,20 +12,25 @@ try
     byte[] responseBuffer = new byte[1024];
     int _ = await socket.ReceiveAsync(responseBuffer);
     string rn = "\r\n"; //Environment.NewLine
+    
+    // GET /index.html HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
     string[] rows = ASCIIEncoding.UTF8.GetString(responseBuffer).Split($"{rn}");
-    Console.WriteLine($"Request:{rn}{ASCIIEncoding.UTF8.GetString(responseBuffer)}{rn}End Request");
 
     // GET /index.html HTTP/1.1
     string[] firstSlipt = rows[0].Split(" ");
     var (method, path, version) = (firstSlipt[0], firstSlipt[1], firstSlipt[2]);
-    Console.WriteLine($"Method: {method}, Path: {path}, HTTP Version: {version}");
+    Console.WriteLine($"1# -> Method: {method}, Path: {path}, HTTP Version: {version}");
+    
+    // Host: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
+    string[] secondSplit = rows[1].Split($"{rn}");
+    var (host, userAgent, accept) = (secondSplit[1], secondSplit[2], secondSplit[3]);
+    Console.WriteLine($"2# -> Host: {host}, UserAgent: {userAgent}, Accept: {accept}");
 
     // HTTP/1.1 404 Not Found\r\n\r\n
     string okResponse = $"{version} 200 OK{rn}";
     string notFoundResponse = $"{version} 404 Not Found{rn}{rn}";
 
     string response = string.Empty;
-    string pathMessage = string.Empty;
 
     switch (path)
     {
@@ -35,18 +40,17 @@ try
         
         case { } when path.StartsWith("/echo"):
             // HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\nabc
-            pathMessage = path.Replace("/echo/", "");
+            string pathMessage = path.ToLower().Replace("/echo/", "");
             response = $"{okResponse}Content-Type: text/plain{rn}Content-Length: {pathMessage.Length}{rn}{rn}{pathMessage}";
             break;
 
         case { } when path.StartsWith("/user-agent"):
             // HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\nfoobar/1.2.3
-            pathMessage = path.Replace("/user-agent", "");
-            response = $"{okResponse}Content-Type: text/plain{rn}Content-Length: {pathMessage.Length}{rn}{rn}{pathMessage}";
+            string userAgentMessage = userAgent.ToLower().Replace("user-agent: ", "");
+            response = $"{okResponse}Content-Type: text/plain{rn}Content-Length: {userAgentMessage.Length}{rn}{rn}{userAgentMessage}";
             break;
 
         default:
-            // GET /index.html HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
             response = notFoundResponse;
             break;
     }
