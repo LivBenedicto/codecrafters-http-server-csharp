@@ -77,7 +77,7 @@ byte[] Response(HttpRequest request)
     string contentType = "text/plain";
 
     body = request.Path switch {
-        "/" => body = httpStatus[HttpStatusCode.Ok] + rn,
+        "/" => body = $"{httpVersion} {httpStatus[HttpStatusCode.Ok]}{rn}",
         
         { } when request.Path.StartsWith("/echo", StringComparison.OrdinalIgnoreCase) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.Path.ToLower().Replace("/echo/", ""), contentType),
 
