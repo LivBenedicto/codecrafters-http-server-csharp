@@ -102,11 +102,14 @@ string HandleFile(HttpRequest request) //string httpVersion, string filePath
     // GET /files/<filename>
     string[] arguments = Environment.GetCommandLineArgs();
     string directory = arguments[2];
-    string filePath = request.Path.Split("/").Last();
-
-    // /<directory>/<filename>
-    if (File.Exists($"{directory}/{filePath}"))
-        response = BuildResponse(request.HttpVersion, httpStatus[HttpStatusCode.Ok], filePath, "application/octet-stream");
+    string filePath = $"{directory}/{request.Path.Split("/").Last()}";
+    Console.WriteLine($"File Path: {filePath}");
+    
+    if (File.Exists(filePath))
+    {
+        string? fileContent = File.ReadAllText(filePath);
+        response = BuildResponse(request.HttpVersion, httpStatus[HttpStatusCode.Ok], fileContent, "application/octet-stream");
+    }
 
     Console.WriteLine($"HandleFile response: {response}");
     return response;
