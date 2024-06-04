@@ -85,7 +85,7 @@ byte[] Response(HttpRequest request)
 
         {} when request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase) => body = HandleFile(request),
 
-        _ => body = httpStatus[HttpStatusCode.NotFound]
+        _ => body = $"{httpVersion} {httpStatus[HttpStatusCode.NotFound]}"
     };
 
     Console.WriteLine($"Response:{rn}{body}{rn}End Response");
@@ -97,7 +97,7 @@ byte[] Response(HttpRequest request)
 
 string HandleFile(HttpRequest request) //string httpVersion, string filePath
 {
-    string response = httpStatus[HttpStatusCode.NotFound];
+    string response = $"{request.HttpVersion} {httpStatus[HttpStatusCode.NotFound]}";
 
     // GET /files/<filename>
     string[] arguments = Environment.GetCommandLineArgs();
