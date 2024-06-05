@@ -93,7 +93,7 @@ byte[] Response(HttpRequest request)
 
         { } when request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase) => body = ExistsFile(request),
 
-        { } when request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase) => body = SaveFile(request),
+        { } when request.Method.Contains("POST") => body = SaveFile(request),
 
         _ => body = $"{httpVersion} {httpStatus[HttpStatusCode.NotFound]}"
     };
