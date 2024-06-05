@@ -90,11 +90,11 @@ byte[] Response(HttpRequest request)
         { } when request.Path.StartsWith("/echo", StringComparison.OrdinalIgnoreCase) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.Path.ToLower().Replace("/echo/", ""), dContentType[ContentType.Text]),
 
         { } when request.Path.StartsWith("/user-agent", StringComparison.OrdinalIgnoreCase) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.UserAgent, dContentType[ContentType.Text]),
-
+        
         { } when request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase) => body = ExistsFile(request),
 
-        { } when request.Method.Contains("POST") => body = SaveFile(request),
-
+        { } when request.Method.Equals("POST") && request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase)  => body = SaveFile(request),
+        
         _ => body = $"{httpVersion} {httpStatus[HttpStatusCode.NotFound]}"
     };
 
