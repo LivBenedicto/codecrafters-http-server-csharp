@@ -56,7 +56,7 @@ HttpRequest Request(Stream stream)
     
     // GET /index.html HTTP/1.1\r\nHost: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
     string[] rows = ASCIIEncoding.UTF8.GetString(responseBuffer).Split($"{rn}");
-    Console.WriteLine(ASCIIEncoding.UTF8.GetString(responseBuffer));
+    Console.WriteLine(ASCIIEncoding.UTF8.GetString(responseBuffer) + rn);
 
     // GET /index.html HTTP/1.1
     string[] firstSlipt = rows[0].Split(" ");
