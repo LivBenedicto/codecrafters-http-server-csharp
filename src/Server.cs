@@ -137,15 +137,11 @@ string ExistsFile(HttpRequest request)
 string SaveFile(HttpRequest request) 
 {
     System.Console.WriteLine("save file");
-    string response = $"{request.HttpVersion} {httpStatus[HttpStatusCode.NotFound]}";
     
     string filePath = HandleFile(request.Path);
-
-    if (File.Exists(filePath))
-    {
-        File.WriteAllText(filePath, request.FileContent);
-        response = $"{request.HttpVersion} {httpStatus[HttpStatusCode.Created]}";
-    }
+    
+    File.WriteAllText(filePath, request.FileContent);
+    string response = $"{request.HttpVersion} {httpStatus[HttpStatusCode.Created]}";
 
     return response;
 }
