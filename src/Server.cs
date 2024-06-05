@@ -140,14 +140,10 @@ string SaveFile(HttpRequest request)
     string response = $"{request.HttpVersion} {httpStatus[HttpStatusCode.NotFound]}";
     
     string filePath = HandleFile(request.Path);
-    string fileContent = request.FileContent;
 
-    if (!File.Exists(filePath))
-        File.Create(filePath);
-    
-    if (!string.IsNullOrEmpty(fileContent))
+    if (File.Exists(filePath))
     {
-        File.WriteAllText(filePath, fileContent);
+        File.WriteAllText(filePath, request.FileContent);
         response = $"{request.HttpVersion} {httpStatus[HttpStatusCode.Created]}";
     }
 
