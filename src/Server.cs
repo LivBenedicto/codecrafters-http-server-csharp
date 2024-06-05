@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -14,6 +15,11 @@ Dictionary<HttpStatusCode, string> httpStatus = new()
     {HttpStatusCode.NotFound, $"404 Not Found{rn}{rn}" }
 };
 
+Dictionary<ContentType, string> DContentType = new()
+{
+    {ContentType.Text, "text/plain"},
+    {ContentType.File, "application/octet-stream"}
+};
 
 try
 {
@@ -35,6 +41,7 @@ server.Dispose();
 void HandleClient(TcpClient client)
 {
     Stream stream = client.GetStream();
+    Console.WriteLine("Stream request -> " + stream);
     HttpRequest request = Request(stream);
 
     byte[] response = Response(request);
@@ -74,16 +81,17 @@ byte[] Response(HttpRequest request)
 {
     string body = string.Empty;
     string httpVersion = request.HttpVersion;
-    string contentType = "text/plain";
 
     body = request.Path switch {
         "/" => body = $"{httpVersion} {httpStatus[HttpStatusCode.Ok]}{rn}",
         
-        { } when request.Path.StartsWith("/echo", StringComparison.OrdinalIgnoreCase) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.Path.ToLower().Replace("/echo/", ""), contentType),
+        { } when request.Path.StartsWith("/echo", StringComparison.OrdinalIgnoreCase) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.Path.ToLower().Replace("/echo/", ""), DContentType[ContentType.Text]),
 
-        { } when request.Path.StartsWith("/user-agent", StringComparison.OrdinalIgnoreCase) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.UserAgent, contentType),
+        { } when request.Path.StartsWith("/user-agent", StringComparison.OrdinalIgnoreCase) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.UserAgent, DContentType[ContentType.Text]),
 
-        {} when request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase) => body = HandleFile(request),
+        { } when request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase) => body = ExistsFile(request),
+
+        { } when request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase) => body = SaveFile(request),
 
         _ => body = $"{httpVersion} {httpStatus[HttpStatusCode.NotFound]}"
     };
@@ -95,30 +103,62 @@ byte[] Response(HttpRequest request)
     return response;
 }
 
-string HandleFile(HttpRequest request) //string httpVersion, string filePath
+string HandleFile(string requestPath)
+{
+    // /files/<filename>
+    string[] arguments = Environment.GetCommandLineArgs();
+    string directory = arguments[2];
+    string filePath = $"{directory}{requestPath.Split("/").Last()}";
+    Console.WriteLine($"File Path: {filePath}");
+    
+    return filePath;
+}
+
+string ExistsFile(HttpRequest request) //return string fileContent, string filePath
 {
     string response = $"{request.HttpVersion} {httpStatus[HttpStatusCode.NotFound]}";
 
-    // GET /files/<filename>
-    string[] arguments = Environment.GetCommandLineArgs();
-    string directory = arguments[2];
-    string filePath = $"{directory}/{request.Path.Split("/").Last()}";
-    Console.WriteLine($"File Path: {filePath}");
-    
+    string filePath = HandleFile(request.Path);
+    string? fileContent = string.Empty;
+
     if (File.Exists(filePath))
     {
-        string? fileContent = File.ReadAllText(filePath);
-        response = BuildResponse(request.HttpVersion, httpStatus[HttpStatusCode.Ok], fileContent, "application/octet-stream");
+        fileContent = File.ReadAllText(filePath);
+        
+        response = BuildResponse(request.HttpVersion, httpStatus[HttpStatusCode.Ok], fileContent, DContentType[ContentType.File]);
+    }
+    
+    return response;
+}
+
+string SaveFile(HttpRequest request) 
+{
+    string response = $"{request.HttpVersion} {httpStatus[HttpStatusCode.NotFound]}";
+    
+    string filePath = HandleFile(request.Path);
+    string fileContent = string.Empty;
+
+    if (!File.Exists(filePath))
+        File.Create(filePath);
+    else
+    {
+        File.WriteAllText(filePath, fileContent);
+        response = BuildResponse(request.HttpVersion, httpStatus[HttpStatusCode.Created], fileContent, DContentType[ContentType.File]);
     }
 
-    Console.WriteLine($"HandleFile response: {response}");
     return response;
 }
 
 // HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\nfoobar/1.2.3
 string BuildResponse(string httpVersion, string httpStatusCode, string message, string contentType) => $"{httpVersion} {httpStatusCode}Content-Type: {contentType}{rn}Content-Length: {message.Length}{rn}{rn}{message}";
 
-enum HttpStatusCode { Ok = 200, NotFound = 404 }
+#endregion
+
+#region Types
+enum HttpStatusCode { Ok = 200, Created = 201, NotFound = 404 }
+
+enum ContentType { [Description("text/plain")] Text = 1 , [Description("application/octet-stream")] File = 2 }
 
 record HttpRequest(string Method, string Path, string HttpVersion, string Host, string UserAgent, string Accept);
+
 #endregion
