@@ -91,7 +91,7 @@ byte[] Response(HttpRequest request)
 
         { } when request.Path.StartsWith("/user-agent", StringComparison.OrdinalIgnoreCase) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.UserAgent, dContentType[ContentType.Text]),
         
-        { } when request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase) => body = ExistsFile(request),
+        { } when request.Method.Equals("GET") && request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase) => body = ExistsFile(request),
 
         { } when request.Method.Equals("POST") && request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase)  => body = SaveFile(request),
         
