@@ -135,6 +135,7 @@ string ExistsFile(HttpRequest request)
 
 string SaveFile(HttpRequest request) 
 {
+    System.Console.WriteLine("save file");
     string response = $"{request.HttpVersion} {httpStatus[HttpStatusCode.NotFound]}";
     
     string filePath = HandleFile(request.Path);
