@@ -69,7 +69,7 @@ HttpRequest Request(Stream stream)
     {
         if (item.StartsWith("Host", StringComparison.OrdinalIgnoreCase)) host = item.Split(": ").Last();
         else if (item.StartsWith("User-Agent", StringComparison.OrdinalIgnoreCase)) userAgent = item.Split(": ").Last();
-        else if (item.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase)) fileContent = rows.Last();
+        else if (item.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase)) { int contentLenght =  int.Parse(item.Split(": ").Last()); fileContent = rows.Last()[..contentLenght]; }
     }
 
     Console.WriteLine($"1# -> Method: {method}, Path: {path}, HttpVersion: {httpVersion}, Host: {host}, UserAgent: {userAgent}");
@@ -139,7 +139,7 @@ string SaveFile(HttpRequest request)
     System.Console.WriteLine("save file");
     
     string filePath = HandleFile(request.Path);
-    
+
     File.WriteAllText(filePath, request.FileContent);
     string response = $"{request.HttpVersion} {httpStatus[HttpStatusCode.Created]}";
 
