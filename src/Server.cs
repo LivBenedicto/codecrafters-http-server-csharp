@@ -12,7 +12,8 @@ const string rn = "\r\n"; //Environment.NewLine
 Dictionary<HttpStatusCode, string> httpStatus = new()
 {
     {HttpStatusCode.Ok, $"200 OK{rn}" },
-    {HttpStatusCode.NotFound, $"404 Not Found{rn}{rn}" }
+    {HttpStatusCode.NotFound, $"404 Not Found{rn}{rn}"},
+    {HttpStatusCode.Created, $"201 Created{rn}{rn}"}
 };
 
 Dictionary<ContentType, string> dContentType = new()
