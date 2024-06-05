@@ -61,7 +61,7 @@ HttpRequest Request(Stream stream)
 
     // GET /index.html HTTP/1.1
     string[] firstSlipt = rows[0].Split(" ");
-    var (method, path, HttpVersion) = (firstSlipt[0], firstSlipt[1], firstSlipt[2]);
+    var (method, path, httpVersion) = (firstSlipt[0], firstSlipt[1], firstSlipt[2]);
     
     // Host: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
     var (host, userAgent, fileContent) = (string.Empty, string.Empty, string.Empty);
@@ -72,10 +72,10 @@ HttpRequest Request(Stream stream)
         else if (item.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase)) fileContent = rows.Last();
     }
 
-    Console.WriteLine($"1# -> Method: {method}, Path: {path}, HTTP HttpVersion: {HttpVersion} Host: {host}, UserAgent: {userAgent}");
+    Console.WriteLine($"1# -> Method: {method}, Path: {path}, HttpVersion: {httpVersion}, Host: {host}, UserAgent: {userAgent}");
     Console.WriteLine($"2# -> FileContent: {fileContent}");
     
-    HttpRequest? request = new(method, path, HttpVersion, host, userAgent, fileContent);
+    HttpRequest? request = new(method, path, httpVersion, host, userAgent, fileContent);
 
     return request;
 }
@@ -148,7 +148,7 @@ string SaveFile(HttpRequest request)
     if (!string.IsNullOrEmpty(fileContent))
     {
         File.WriteAllText(filePath, fileContent);
-        response = BuildResponse(request.HttpVersion, httpStatus[HttpStatusCode.Created], fileContent, dContentType[ContentType.File]);
+        response = $"{request.HttpVersion} {httpStatus[HttpStatusCode.Created]}";
     }
 
     return response;
