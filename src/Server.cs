@@ -64,18 +64,20 @@ HttpRequest Request(Stream stream)
     var (method, path, httpVersion) = (firstSlipt[0], firstSlipt[1], firstSlipt[2]);
     
     // Host: localhost:4221\r\nUser-Agent: curl/7.64.1\r\nAccept: */*\r\n\r\n
-    var (host, userAgent, fileContent) = (string.Empty, string.Empty, string.Empty);
+    var (host, userAgent, fileContent, acceptEncoding) = (string.Empty, string.Empty, string.Empty, string.Empty);
     foreach (string item in rows)
     {
         if (item.StartsWith("Host", StringComparison.OrdinalIgnoreCase)) host = item.Split(": ").Last();
         else if (item.StartsWith("User-Agent", StringComparison.OrdinalIgnoreCase)) userAgent = item.Split(": ").Last();
-        else if (item.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase)) { int contentLenght =  int.Parse(item.Split(": ").Last()); fileContent = rows.Last()[..contentLenght]; }
+        else if (item.StartsWith("Content-Length", StringComparison.OrdinalIgnoreCase)) { int contentLenght =  int.Parse(item.Split(": ").Last()); fileContent = rows.Last()[..contentLenght]; }
+        else if (item.StartsWith("Accept-Encoding", StringComparison.OrdinalIgnoreCase)) acceptEncoding = item.Split(": ").Last();
     }
 
-    Console.WriteLine($"1# -> Method: {method}, Path: {path}, HttpVersion: {httpVersion}, Host: {host}, UserAgent: {userAgent}");
-    Console.WriteLine($"2# -> FileContent: {fileContent}");
+    // Console.WriteLine($"1# -> Method: {method}, Path: {path}, HttpVersion: {httpVersion}, Host: {host}, UserAgent: {userAgent}");
+    // Console.WriteLine($"2# -> FileContent: {fileContent}");
+    Console.WriteLine($"3# -> AcceptEncoding: {acceptEncoding}");
     
-    HttpRequest? request = new(method, path, httpVersion, host, userAgent, fileContent);
+    HttpRequest? request = new(method, path, httpVersion, host, userAgent, fileContent, acceptEncoding);
 
     return request;
 }
@@ -88,7 +90,9 @@ byte[] Response(HttpRequest request)
     body = request.Path switch {
         "/" => body = $"{httpVersion} {httpStatus[HttpStatusCode.Ok]}{rn}",
         
-        { } when request.Path.StartsWith("/echo", StringComparison.OrdinalIgnoreCase) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.Path.ToLower().Replace("/echo/", ""), dContentType[ContentType.Text]),
+        { } when request.Path.StartsWith("/echo", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(request.AcceptEncoding) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.Path.ToLower().Replace("/echo/", ""), dContentType[ContentType.Text]),
+        
+        { } when request.Path.StartsWith("/echo", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(request.AcceptEncoding) => body = CompressionEcho(request),
 
         { } when request.Path.StartsWith("/user-agent", StringComparison.OrdinalIgnoreCase) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.UserAgent, dContentType[ContentType.Text]),
         
@@ -102,6 +106,21 @@ byte[] Response(HttpRequest request)
     Console.WriteLine($"Response:{rn}{body}{rn}End Response");
     
     byte[] response = ASCIIEncoding.UTF8.GetBytes(body);
+
+    return response;
+}
+
+string CompressionEcho(HttpRequest request)
+{
+    System.Console.WriteLine("CompressionEcho");
+    string response = string.Empty;
+    string[] validEncondings = ["gzip"];
+
+    if (validEncondings.Contains(request.AcceptEncoding))
+        // $"Content-Encoding: {request.AcceptEncoding}"
+        response = BuildResponseAcceptEncoding(request.HttpVersion, httpStatus[HttpStatusCode.Ok], request.Path.ToLower().Replace("/echo/", ""), dContentType[ContentType.Text], request.AcceptEncoding);
+    else
+        response = BuildResponse(request.HttpVersion, httpStatus[HttpStatusCode.Ok], request.Path.ToLower().Replace("/echo/", ""), dContentType[ContentType.Text]);
 
     return response;
 }
@@ -149,6 +168,8 @@ string SaveFile(HttpRequest request)
 // HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\nfoobar/1.2.3
 string BuildResponse(string httpVersion, string httpStatusCode, string message, string contentType) => $"{httpVersion} {httpStatusCode}Content-Type: {contentType}{rn}Content-Length: {message.Length}{rn}{rn}{message}";
 
+string BuildResponseAcceptEncoding(string httpVersion, string httpStatusCode, string message, string contentType, string acceptEncoding) => $"{httpVersion} {httpStatusCode}{rn}Content-Encoding: {acceptEncoding}{rn}Content-Type: {contentType}{rn}Content-Length: {message.Length}{rn}{rn}{message}";
+
 #endregion
 
 #region Types
@@ -156,6 +177,6 @@ enum HttpStatusCode { Ok = 200, Created = 201, NotFound = 404 }
 
 enum ContentType { [Description("text/plain")] Text = 1 , [Description("application/octet-stream")] File = 2 }
 
-record HttpRequest(string Method, string Path, string HttpVersion, string Host, string UserAgent, string FileContent);
+record HttpRequest(string Method, string Path, string HttpVersion, string Host, string UserAgent, string FileContent, string AcceptEncoding);
 
 #endregion
