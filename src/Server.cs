@@ -168,7 +168,7 @@ string SaveFile(HttpRequest request)
 // HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\nfoobar/1.2.3
 string BuildResponse(string httpVersion, string httpStatusCode, string message, string contentType) => $"{httpVersion} {httpStatusCode}Content-Type: {contentType}{rn}Content-Length: {message.Length}{rn}{rn}{message}";
 
-string BuildResponseAcceptEncoding(string httpVersion, string httpStatusCode, string message, string contentType, string acceptEncoding) => $"{httpVersion} {httpStatusCode}{rn}Content-Encoding: {acceptEncoding}{rn}Content-Type: {contentType}{rn}Content-Length: {message.Length}{rn}{rn}{message}";
+string BuildResponseAcceptEncoding(string httpVersion, string httpStatusCode, string message, string contentType, string acceptEncoding) => $"{httpVersion} {httpStatusCode}Content-Encoding: {acceptEncoding}{rn}Content-Type: {contentType}{rn}Content-Length: {message.Length}{rn}{rn}{message}";
 
 #endregion
 
