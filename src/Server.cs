@@ -135,6 +135,8 @@ string CompressionEcho(HttpRequest request)
         byte[] compressed = memoryStream.ToArray();
         messageLength = compressed.Length;
         message = "";
+
+        Console.WriteLine($"messageLength: {messageLength}");
     }
 
     response = BuildResponse(request.HttpVersion, httpStatus[HttpStatusCode.Ok], message, messageLength, dContentType[ContentType.Text], acceptEncoding);
@@ -190,10 +192,10 @@ string BuildResponse(string httpVersion, string httpStatusCode, string message, 
     if(!string.IsNullOrEmpty(acceptEncoding))
         response.Append($"content-encoding: {acceptEncoding}{rn}");
     
-    response.Append($"content-type: {contentType}{rn}content-length: {messageLength}{rn}{rn}");
+    response.Append($"content-type: {contentType}{rn}content-length: {messageLength}{rn}{rn}{message}");
 
-    if(!string.IsNullOrEmpty(message))
-         response.Append($"{message}");
+    // if(!string.IsNullOrEmpty(message))
+    //     response.Append($"{message}");
 
     return response.ToString();
 }
