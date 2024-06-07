@@ -133,10 +133,12 @@ string CompressionEcho(HttpRequest request)
             gzipStream.Close();
         }
         byte[] compressed = memoryStream.ToArray();
-        messageLength = compressed.Length;
-        message = "";
+        // messageLength = compressed.Length;
+        // message = "";
 
-        Console.WriteLine($"messageLength: {messageLength}");
+        Console.WriteLine($"messageLength: {compressed.Length}");
+
+        response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: {compressed.Length}\r\n\r\n";
     }
 
     response = BuildResponse(request.HttpVersion, httpStatus[HttpStatusCode.Ok], message, messageLength, dContentType[ContentType.Text], acceptEncoding);
