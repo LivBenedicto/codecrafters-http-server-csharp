@@ -9,7 +9,7 @@ server.Start();
 Console.WriteLine("Starting server");
 
 const string rn = "\r\n"; //Environment.NewLine
-// HTTP/1.1 404 Not Found\r\n\r\n
+// HTTP/1.1 404 Not Found\r\n\r\n 
 Dictionary<HttpStatusCode, string> httpStatus = new()
 {
     {HttpStatusCode.Ok, $"200 OK{rn}" },
@@ -85,42 +85,40 @@ HttpRequest Request(Stream stream)
 
 byte[] Response(HttpRequest request)
 {
-    string body = string.Empty;
+    byte[] response = new byte[2048];
     string httpVersion = request.HttpVersion;
 
-    body = request.Path switch {
-        "/" => body = BuildHttpStatusResponse(httpVersion, httpStatus[HttpStatusCode.Ok]) + rn,
+    response = request.Path switch {
+        "/" => response = ASCIIEncoding.UTF8.GetBytes($"{request.HttpVersion} 200 OK\r\n\r\n"),
         
-        { } when request.Path.StartsWith("/echo", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(request.AcceptEncoding) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.Path.ToLower().Replace("/echo/", ""), request.Path.Replace("/echo/", "").Length, dContentType[ContentType.Text], request.AcceptEncoding),
+        { } when request.Path.StartsWith("/echo", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(request.AcceptEncoding) => response = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.Path.ToLower().Replace("/echo/", ""), request.Path.Replace("/echo/", "").Length, dContentType[ContentType.Text], request.AcceptEncoding),
         
-        { } when request.Path.StartsWith("/echo", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(request.AcceptEncoding) => body = CompressionEcho(request),
+        { } when request.Path.StartsWith("/echo", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(request.AcceptEncoding) => response = CompressionEcho(request),
 
-        { } when request.Path.StartsWith("/user-agent", StringComparison.OrdinalIgnoreCase) => body = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.UserAgent, request.UserAgent.Length, dContentType[ContentType.Text], request.AcceptEncoding),
+        { } when request.Path.StartsWith("/user-agent", StringComparison.OrdinalIgnoreCase) => response = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.UserAgent, request.UserAgent.Length, dContentType[ContentType.Text], request.AcceptEncoding),
         
-        { } when request.Method.Equals("GET") && request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase) => body = ExistsFile(request),
+        { } when request.Method.Equals("GET") && request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase) => response = ExistsFile(request),
 
-        { } when request.Method.Equals("POST") && request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase)  => body = SaveFile(request),
+        { } when request.Method.Equals("POST") && request.Path.StartsWith("/files", StringComparison.OrdinalIgnoreCase)  => response = SaveFile(request),
         
-        _ => body = BuildHttpStatusResponse(httpVersion, httpStatus[HttpStatusCode.NotFound])
+        _ => response = BuildHttpStatusResponse(httpVersion, httpStatus[HttpStatusCode.NotFound])
     };
 
-    Console.WriteLine($"Response:{rn}{body}{rn}End Response");
+    Console.WriteLine($"Response:{rn}{UTF8Encoding.ASCII.GetString(response)}{rn}End Response");
     
-    byte[] response = ASCIIEncoding.UTF8.GetBytes(body);
-
     return response;
 }
 
-string CompressionEcho(HttpRequest request)
+byte[] CompressionEcho(HttpRequest request)
 {
     Console.WriteLine("CompressionEcho");
-    string response = string.Empty;
 
     string[] acceptEncodingList = request.AcceptEncoding.Split(",");
     string? acceptEncoding = acceptEncodingList.Where(x => x.Contains("gzip")).FirstOrDefault();
     
     string message = request.Path.ToLower().Replace("/echo/", "");
     int messageLength = message.Length;
+    byte[] compressed = new byte[2048];
 
     if(!string.IsNullOrEmpty(acceptEncoding))
     {
@@ -132,16 +130,16 @@ string CompressionEcho(HttpRequest request)
             gzipStream.Flush();
             gzipStream.Close();
         }
-        byte[] compressed = memoryStream.ToArray();
-        // messageLength = compressed.Length;
-        // message = "";
+        compressed = memoryStream.ToArray();
+        messageLength = compressed.Length;
+        message = string.Empty;
 
         Console.WriteLine($"messageLength: {compressed.Length}");
-
-        response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: {compressed.Length}\r\n\r\n";
     }
-    else
-        response = BuildResponse(request.HttpVersion, httpStatus[HttpStatusCode.Ok], message, messageLength, dContentType[ContentType.Text], acceptEncoding);
+    
+    // response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: {compressed.Length}\r\n\r\n" + compressed;
+    byte[] buildResponse = BuildResponse(request.HttpVersion, httpStatus[HttpStatusCode.Ok], message, messageLength, dContentType[ContentType.Text], acceptEncoding);
+    byte[] response = [..buildResponse, ..compressed];
 
     return response;
 }
@@ -157,9 +155,9 @@ string HandleFile(string requestPath)
     return filePath;
 }
 
-string ExistsFile(HttpRequest request)
+byte[] ExistsFile(HttpRequest request)
 {
-    string response = $"{request.HttpVersion} {httpStatus[HttpStatusCode.NotFound]}";
+    byte[] response = BuildHttpStatusResponse(request.HttpVersion, httpStatus[HttpStatusCode.NotFound]);
 
     string filePath = HandleFile(request.Path);
     string? fileContent = string.Empty;
@@ -174,20 +172,22 @@ string ExistsFile(HttpRequest request)
     return response;
 }
 
-string SaveFile(HttpRequest request) 
+byte[] SaveFile(HttpRequest request) 
 {
     System.Console.WriteLine("save file");
     
     string filePath = HandleFile(request.Path);
 
     File.WriteAllText(filePath, request.FileContent);
-    string response =  BuildHttpStatusResponse(request.HttpVersion, httpStatus[HttpStatusCode.Created]);
+    byte[] response =  BuildHttpStatusResponse(request.HttpVersion, httpStatus[HttpStatusCode.Created]);
 
     return response;
 }
+#endregion
 
+#region Build Responses
 // HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\nfoobar/1.2.3
-string BuildResponse(string httpVersion, string httpStatusCode, string message, int messageLength, string contentType, string? acceptEncoding)
+byte[] BuildResponse(string httpVersion, string httpStatusCode, string message, int messageLength, string contentType, string? acceptEncoding)
 { 
     StringBuilder response = new($"{httpVersion} {httpStatusCode}");
 
@@ -196,13 +196,12 @@ string BuildResponse(string httpVersion, string httpStatusCode, string message, 
     
     response.Append($"content-type: {contentType}{rn}content-length: {messageLength}{rn}{rn}{message}");
 
-    // if(!string.IsNullOrEmpty(message))
-    //     response.Append($"{message}");
+    string responseString = response.ToString();
 
-    return response.ToString();
+    return ASCIIEncoding.UTF8.GetBytes(responseString);
 }
 
-string BuildHttpStatusResponse(string httpVersion, string httpStatus) => $"{httpVersion} {httpStatus}";
+byte[] BuildHttpStatusResponse(string httpVersion, string httpStatus) => ASCIIEncoding.UTF8.GetBytes($"{httpVersion} {httpStatus}");
 #endregion
 
 #region Types
