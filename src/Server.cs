@@ -89,7 +89,7 @@ byte[] Response(HttpRequest request)
     string httpVersion = request.HttpVersion;
 
     response = request.Path switch {
-        "/" => response = ASCIIEncoding.UTF8.GetBytes($"{request.HttpVersion} 200 OK\r\n\r\n"),
+        "/" => response = ASCIIEncoding.UTF8.GetBytes($"{request.HttpVersion} {httpStatus[HttpStatusCode.Ok]}{rn}"),
         
         { } when request.Path.StartsWith("/echo", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(request.AcceptEncoding) => response = BuildResponse(httpVersion, httpStatus[HttpStatusCode.Ok], request.Path.ToLower().Replace("/echo/", ""), request.Path.Replace("/echo/", "").Length, dContentType[ContentType.Text], request.AcceptEncoding),
         
@@ -122,11 +122,11 @@ byte[] CompressionEcho(HttpRequest request)
 
     if(!string.IsNullOrEmpty(acceptEncoding))
     {
-        byte[] acceptEncodingBytes = Encoding.UTF8.GetBytes(acceptEncoding);
+        byte[] messageBytes = Encoding.UTF8.GetBytes(message);
         using var memoryStream = new MemoryStream();
         using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress, true))
         {
-            gzipStream.Write(acceptEncodingBytes, 0, acceptEncodingBytes.Length);
+            gzipStream.Write(messageBytes, 0, messageBytes.Length);
             gzipStream.Flush();
             gzipStream.Close();
         }
